@@ -1,0 +1,19 @@
+{
+  "name": "chaos-arena",
+  "private": true,
+  "description": "שירות notifications ומערכת תקלות לאימון סוכן SRE",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}
