@@ -99,8 +99,18 @@ What was chosen, what the options were, and why. `docs/spec.md` defines what we 
 ### Converting library errors (BE-06)
 - **Chosen:** broken JSON and an oversized body are handled in the error handler, and Mongo's `E11000` in the repository. All of these become `AppError`.
 
+### Broken JSON and oversized body in the error handler (CA-01 task 2)
+- **Chosen:** broken JSON returns `400 VALIDATION_ERROR` with the message "Request body is not valid JSON" and no `details`. An oversized body returns `413 PAYLOAD_TOO_LARGE`. Both are created as an inline `AppError` in the error handler, with no new subclass.
+- **Rejected:** `ValidationError([])` with "Invalid request body". The practice project's `INVALID_JSON` code, which the spec does not allow.
+- **Why:** broken JSON has no fields to list, and its own message tells it apart from a schema failure. These are the only two places that create these errors, so a class adds nothing.
+
 ### Middleware order and Express 5 (BE-06)
 - **Chosen:** `requestId → logger → express.json() → routes → 404 → errorHandler`. The logger comes before `express.json()`, so a request with broken JSON is logged too. Express 5, with `app.disable('x-powered-by')`.
+
+### Middleware names (CA-01)
+- **Chosen:** verb names that say what the middleware does: `assignRequestId`, `logRequest`, `handleError`. `notFound` keeps its name. File names stay as they are (`requestId.ts`, `logger.ts`, `errorHandler.ts`).
+- **Rejected:** noun names (`requestId`, `logger`, `errorHandler`), the common Express style.
+- **Why:** in `app.use(requestId)` the function is passed, not called, so a noun reads like a constant value. The middleware order in the spec and above names stages, not functions, so it stays as written.
 
 ### Controller methods as arrow functions (BE-06)
 - **Chosen:** arrow functions, with `@typescript-eslint/unbound-method` enabled.
