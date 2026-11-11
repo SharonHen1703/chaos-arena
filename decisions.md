@@ -96,6 +96,7 @@ What was chosen, what the options were, and why. `docs/spec.md` defines what we 
 - **`interfaces.ts`:** the contracts the service depends on (`PreferencesRepository`, later `PreferencesClient`), and the domain types those contracts take and return (`UserPreferences`). Types inferred from zod stay in `schemas.ts`, and Mongoose types stay in the model. The service itself has no interface: the controller imports the class.
 - **Rejected:** `<feature>.<layer>.ts` (`preferences.service.ts`), the NestJS style.
 - **Why:** the folder already names the feature, so the prefix repeats the path. Importing from `interfaces.ts` shows that the service does not know the implementation.
+- **Cost:** several open tabs named `service.ts`, and searching by file name needs the folder too (`preferences/service`).
 
 ### Uniform error format (BE-06)
 - **Chosen:** `{ error: { code, message, requestId, details? } }`. On 500 the message is generic (`INTERNAL_ERROR`), and the full details go to the log with the request id.
@@ -106,6 +107,11 @@ What was chosen, what the options were, and why. `docs/spec.md` defines what we 
 ### Validation with zod (BE-06)
 - **Chosen:** a `validateBody` middleware, with `400 VALIDATION_ERROR` and `details`.
 - **Why:** zod checks shape, and business rules live in the service. TypeScript types do not exist at runtime, and zod strips undefined fields, which protects against mass assignment.
+
+### Normalizing `PREFERENCES_URL` in config (CA-01 task 5)
+- **Chosen:** `config.ts` validates `PREFERENCES_URL` with `z.url({ protocol: /^https?$/ })` and removes trailing slashes. The client joins paths with a template string.
+- **Rejected:** `new URL(path, base)` in the client, because it drops a path in the base (`new URL('/preferences/query', 'http://host/api')` loses `/api`).
+- **Why:** a plain `z.url()` accepts `localhost:3001` (it parses `localhost:` as a scheme), so a broken value would only fail on the first call to preferences. Now it fails at startup, along with the other variables.
 
 ### Converting library errors (BE-06)
 - **Chosen:** broken JSON and an oversized body are handled in the error handler, and Mongo's `E11000` in the repository. All of these become `AppError`.
