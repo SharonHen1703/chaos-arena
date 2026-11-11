@@ -81,10 +81,21 @@ What was chosen, what the options were, and why. `docs/spec.md` defines what we 
 ### preferences returns data and does not decide (HLD-03)
 - **Chosen:** the "send or not" decision lives in notifications-api. `GET` and `PATCH` on `/users/:id/preferences`, and `POST /preferences/query` for fan-out.
 
+### Repeated PATCH touches `updatedAt` (CA-01 task 4)
+- **Chosen:** a repeated `PATCH /users/:id/preferences` with the same value keeps `optedOut` the same but updates `updatedAt`, because `timestamps` touches it on every update.
+- **Rejected:** a filter with `optedOut: { $ne: optedOut }`, which updates only when the value changes.
+- **Why:** idempotency here refers to the business state (`optedOut`), and `updatedAt` is metadata. With the filter, `null` from `findOneAndUpdate` would no longer mean "user not found", because it would also be returned when the value didn't change.
+
 ## Code
 
 ### Layers (BE-06)
 - **Chosen:** controller, service and repository, organized by feature. The service depends on interfaces (`NotificationRepository`, `PreferencesClient`), and the composition root is `app.ts`.
+
+### File names inside a feature folder (CA-01)
+- **Chosen:** files are named by layer, with no feature prefix: `routes.ts`, `controller.ts`, `service.ts`, `repository.ts`, `schemas.ts`. A model keeps its entity prefix (`preference.model.ts`, `notification.model.ts`, `delivery.model.ts`), because one folder can hold several entities. Class names keep the full name (`PreferencesService`), because they are imported side by side in `app.ts`.
+- **`interfaces.ts`:** the contracts the service depends on (`PreferencesRepository`, later `PreferencesClient`), and the domain types those contracts take and return (`UserPreferences`). Types inferred from zod stay in `schemas.ts`, and Mongoose types stay in the model. The service itself has no interface: the controller imports the class.
+- **Rejected:** `<feature>.<layer>.ts` (`preferences.service.ts`), the NestJS style.
+- **Why:** the folder already names the feature, so the prefix repeats the path. Importing from `interfaces.ts` shows that the service does not know the implementation.
 
 ### Uniform error format (BE-06)
 - **Chosen:** `{ error: { code, message, requestId, details? } }`. On 500 the message is generic (`INTERNAL_ERROR`), and the full details go to the log with the request id.
