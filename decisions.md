@@ -98,6 +98,12 @@ What was chosen, what the options were, and why. `docs/spec.md` defines what we 
 - **Why:** the folder already names the feature, so the prefix repeats the path. Importing from `interfaces.ts` shows that the service does not know the implementation.
 - **Cost:** several open tabs named `service.ts`, and searching by file name needs the folder too (`preferences/service`).
 
+### Where a client of another service lives (CA-01)
+- **Chosen:** the implementation lives in `src/clients/<target>/`, with files named by role like a feature folder: `client.ts` (the class, plus its private helpers and constants) and `schemas.ts` (zod schemas for the target's responses). The interface stays with the consumer: `PreferencesClient` and `UserPreference` are in `notifications/interfaces.ts`, and `client.ts` imports them from there.
+- **Rejected:** `preferences.client.ts` inside `src/notifications/`, next to the feature's layers. Also rejected: moving `interfaces.ts` into the client folder.
+- **Why:** the client is an adapter to another service, not a layer of the notifications feature, and the target's response schema does not belong in the feature's `schemas.ts`, which describes our own requests. The interface describes what the consumer needs, so it belongs to the consumer, and `interfaces.ts` will also hold `NotificationRepository`. The plural `clients/` leaves room for another client.
+- **Cost:** a deeper import path (`../../notifications/interfaces.js`), and the client depends on a feature folder.
+
 ### Uniform error format (BE-06)
 - **Chosen:** `{ error: { code, message, requestId, details? } }`. On 500 the message is generic (`INTERNAL_ERROR`), and the full details go to the log with the request id.
 
